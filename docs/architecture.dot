@@ -7,7 +7,7 @@ digraph Carnet {
   chef [label="Coordinateur LangChain · classe et prépare la visite"];
   annonces [label="Agent annonces · collecter"];
   expert [label="Agent expert · rechercher, lire"];
-  catalogue [label="renew + Spoticar / inventaire local"];
+  catalogue [label="renew + AutoScout24 + Spoticar / inventaire local"];
   documents [label="Pages Web / notice locale"];
   carnet [label="SQLite · sélections de visites", shape=cylinder];
   navigateur -> serveur [dir=both, label="WebSocket"];

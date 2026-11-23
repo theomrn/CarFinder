@@ -14,7 +14,7 @@ flowchart LR
         files["Fichiers JSON · inventaire fictif et notice Renault"]
         db[("SQLite · carnet de visites")]
     end
-    catalogues["Catalogues Web · renew et Spoticar"]
+    catalogues["Catalogues Web · renew, AutoScout24 et Spoticar"]
     web["Recherche DDGS et pages documentaires"]
     browser <-->|"WebSocket"| ui
     ui <-->|"Critères, progression et rapport"| coordinator
@@ -69,6 +69,6 @@ Le code fixe l’ordre des délégations. Ollama émet les appels aux outils aut
 
 | Mode | Sources | Agents et carnet |
 |---|---|---|
-| **Catalogues en direct** | renew, Spoticar, recherche Web et pages ouvertes | Trois agents avec Ollama. Sélection écrite dans SQLite. |
+| **Catalogues en direct** | renew, AutoScout24, Spoticar, recherche Web et pages ouvertes | Trois agents avec Ollama. Sélection écrite dans SQLite. |
 | **Soutenance locale** | Sept annonces fictives et un extrait du manuel Renault dans le projet | Trois agents avec Ollama. Sélection écrite dans SQLite. Fonctionne sans Internet. |
 | **Démonstration** | Les sept annonces fictives | Classement Python seul. La recherche ne crée aucune sélection. |

@@ -42,13 +42,9 @@ Les critères obligatoires connus éliminent les annonces incompatibles. Une don
 
 Pour chaque véhicule, la médiane porte sur les **autres** annonces vérifiées de même modèle, génération identifiable, libellé moteur et boîte, dans une fenêtre de deux ans et 25 000 km autour du véhicule. Au moins cinq prix sont nécessaires. L’échantillon est construit avant le filtre de budget. Les libellés techniques divergents peuvent réduire le nombre de comparables.
 
-| Composante | Poids initial | Calcul sur 10 |
-|---|---:|---|
-| Prix | 50 % | 5 à la médiane. Chaque écart de 4 % sous la médiane ajoute un point, dans les limites de 0 à 10. |
-| Préférences confirmées | 30 % | Proportion des expressions demandées présentes dans les équipements ou la finition. |
-| Justificatifs annoncés | 20 % | 5 points pour une garantie mentionnée et 5 pour un entretien documenté. |
+La note accorde 40 % au prix relatif, 25 % au kilométrage, 15 % aux équipements reconnus, 15 % à l’entretien documenté et 5 % à la garantie. Si des préférences sont saisies, elles reçoivent 10 des 15 points de pondération des équipements. Chaque famille d’équipements compte une fois.
 
-Les poids disponibles sont renormalisés. En l’absence de médiane et de préférences, la note reflète uniquement les justificatifs annoncés. Une note évalue le contenu de la fiche. Le rapport précise le nombre de comparables, la date et les critères de calcul. Les dix meilleurs résultats sont présentés, avec départage par prix croissant.
+Pour noter le prix avec moins de cinq comparables stricts, le classement utilise les autres annonces du même modèle, de même énergie et boîte, à deux années et 40 000 km près. Ces versions peuvent avoir des finitions différentes. Le détail affiche le prix de référence et la taille de l’échantillon. Sans comparable, seul le sous-score de prix est neutre (5/10). Le kilométrage tient compte du compteur et, si possible, des compteurs de véhicules du même âge. Un accident déclaré retire 2,5 points à la note finale. Un historique inconnu ne déclenche aucun malus accident.
 
 ## Vérifier le projet
 

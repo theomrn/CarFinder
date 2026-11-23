@@ -4,7 +4,7 @@
 
 « Un acheteur de voiture d’occasion doit comparer des annonces qui décrivent différemment le même modèle. Notre application réunit les informations sourcées sur la motorisation, compare les prix de véhicules proches et conserve les meilleures annonces dans un carnet de visites. Trois agents LangChain se partagent la collecte, la recherche documentaire et la préparation de la visite. »
 
-Montrer le diagramme dans **Architecture des trois agents**, juste au-dessus du formulaire. La validation du sujet et de l’architecture relève de l’enseignant. Le binôme peut présenter ce pitch et recueillir son accord ou ses ajustements.
+Montrer le diagramme dans l’onglet **Architecture**. La validation du sujet et de l’architecture relève de l’enseignant. Le binôme peut présenter ce pitch et recueillir son accord ou ses ajustements.
 
 ## Déroulé à deux
 

@@ -13,4 +13,4 @@ def cars():
 
 
 def notices(query):
-    return [NOTICE] if model_match("Renault Clio V", query.model) is True else []
+    return [NOTICE] if model_match("Renault Clio V", query.vehicle) is True else []

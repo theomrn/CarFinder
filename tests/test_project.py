@@ -98,6 +98,24 @@ class Carnet(unittest.TestCase):
             save("recherche-vide","Soutenance locale",Query("Clio V",budget=100),[],db)
             self.assertEqual(recent(db)[0]["listings"],[])
 
+class Marques(unittest.TestCase):
+    def test_marque_libre_et_modele_homonyme(self):
+        q = Query("Model 3", brand="Tesla")
+        car = replace(demo.cars()[0], model="Tesla Model 3")
+        other = replace(car, model="Autre Model 3", url="demo:autre")
+        ranked, _ = rank(q, [other, car])
+        self.assertEqual([row["car"] for row in ranked], [car])
+
+    def test_chemins_catalogues_marque_composee(self):
+        from comparateur.sources import catalog
+        page = BeautifulSoup("<p>Aucun véhicule</p>", "html.parser")
+        with patch("comparateur.sources.doc", return_value=page):
+            _, _, url = catalog("Spoticar", "Discovery Sport", "Land Rover")
+            self.assertTrue(url.endswith("/land-rover/discovery-sport"))
+            _, _, url = catalog("renew", "Discovery Sport", "Land Rover")
+            self.assertIn("brand.label.raw=LAND+ROVER", url)
+            self.assertIn("model.label.raw=DISCOVERY+SPORT", url)
+
 class Alternatives(unittest.TestCase):
     def test_budget_avec_meme_vehicule_et_memes_criteres(self):
         from comparateur.domain import alternatives

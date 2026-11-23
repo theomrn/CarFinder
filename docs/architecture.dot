@@ -1,0 +1,22 @@
+digraph Carnet {
+  graph [rankdir=TB, bgcolor="transparent"];
+  node [shape=box, style="rounded,filled", fillcolor="#eef6f5", color="#34746b", fontname="Helvetica"];
+  edge [fontname="Helvetica", fontsize=10, color="#47615f"];
+  navigateur [label="Navigateur · formulaire, progression, carnet"];
+  serveur [label="Backend Python · serveur Streamlit"];
+  chef [label="Coordinateur LangChain · classe et prépare la visite"];
+  annonces [label="Agent annonces · collecter"];
+  expert [label="Agent expert · rechercher, lire"];
+  catalogue [label="renew + Spoticar / inventaire local"];
+  documents [label="Pages Web / notice locale"];
+  carnet [label="SQLite · sélections de visites", shape=cylinder];
+  navigateur -> serveur [dir=both, label="WebSocket"];
+  serveur -> chef [label="critères"];
+  chef -> annonces [label="1. task"];
+  annonces -> catalogue [label="lecture"];
+  chef -> expert [label="2. task après inventaire"];
+  expert -> documents [label="lecture"];
+  chef -> carnet [label="3. enregistrer_selection"];
+  serveur -> carnet [label="relire le carnet"];
+  { rank=same; annonces; expert; }
+}

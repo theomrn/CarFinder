@@ -97,3 +97,36 @@ class Carnet(unittest.TestCase):
             self.assertEqual([x["car"]["place"] for x in rows[0]["listings"]],["Tours","Lille","Lyon"])
             save("recherche-vide","Soutenance locale",Query("Clio V",budget=100),[],db)
             self.assertEqual(recent(db)[0]["listings"],[])
+
+class Alternatives(unittest.TestCase):
+    def test_budget_avec_meme_vehicule_et_memes_criteres(self):
+        from comparateur.domain import alternatives
+        fleet = demo.cars()
+        prices, closest = alternatives(Query("Clio V", budget=11000, km=80000), fleet)
+        self.assertEqual(prices[0], 11900)
+        self.assertEqual(closest[1], ["budget"])
+
+    def test_budget_indetermine_et_ecart_de_kilometrage(self):
+        from comparateur.domain import alternatives
+        fleet = demo.cars()
+        prices, closest = alternatives(Query("Clio V", budget=15000, km=45000), fleet)
+        self.assertFalse(prices)
+        self.assertEqual(closest, (fleet[0], ["kilométrage"]))
+        self.assertEqual(alternatives(Query("Yaris", brand="Toyota"), fleet), ([], None))
+
+class Scoring(unittest.TestCase):
+    def test_each_signal_changes_score(self):
+        base = replace(demo.cars()[0], price=12000, km=60000, equipment="", warranty="", service="")
+        peers = [replace(base, url=f"peer:{i}") for i in range(5)]
+
+        def score(**changes):
+            target = replace(base, **changes)
+            rows, _ = rank(Query("Clio V"), [target, *peers])
+            return next(r["score"] for r in rows if r["car"] is target)
+
+        for changes in ({"price":10500}, {"km":40000}, {"service":"Carnet présenté"},
+                        {"equipment":"Caméra, navigation, Bluetooth, radar de recul"}):
+            self.assertGreater(score(**changes), score())
+        self.assertLess(score(price=14000), score())
+        self.assertLess(score(km=80000), score())
+        self.assertAlmostEqual(score()-score(accident=True), 2.5)

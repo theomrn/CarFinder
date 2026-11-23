@@ -23,7 +23,7 @@ def save(identifier, mode, query, ranked, path=DATABASE):
     with closing(connect(path)) as db, db:
         db.execute("INSERT INTO selections (id, mode, model, criteria, listings) VALUES (?, ?, ?, ?, ?) "
                    "ON CONFLICT(id) DO NOTHING",
-                   (identifier, mode, query.model, json.dumps(asdict(query)), json.dumps(listings)))
+                   (identifier, mode, query.vehicle, json.dumps(asdict(query)), json.dumps(listings)))
     return len(listings)
 
 

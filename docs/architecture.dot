@@ -11,6 +11,9 @@ digraph Carnet {
   documents [label="Pages Web / notice locale"];
   carnet [label="SQLite · sélections de visites", shape=cylinder];
   navigateur -> serveur [dir=both, label="WebSocket"];
+  intention [label="Agent de compréhension · consulte le catalogue"];
+  serveur -> intention [label="phrase"];
+  intention -> chef [label="filtres validés"];
   serveur -> chef [label="critères"];
   chef -> annonces [label="1. task"];
   annonces -> catalogue [label="lecture"];

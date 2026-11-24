@@ -7,6 +7,7 @@ flowchart LR
     browser["Navigateur · formulaire, rapport et carnet"]
     subgraph mac["Sur le Mac"]
         ui["Serveur Python Streamlit"]
+        parser["Agent de compréhension · catalogue des modèles"]
         coordinator["Agent coordinateur · Deep Agents"]
         listings["Agent annonces · LangChain"]
         expert["Agent expert · LangChain"]
@@ -18,6 +19,9 @@ flowchart LR
     web["Recherche DDGS et pages documentaires"]
     browser <-->|"WebSocket"| ui
     ui <-->|"Critères, progression et rapport"| coordinator
+    ui -->|"Phrase"| parser
+    parser -->|"Filtres validés"| coordinator
+    parser --> model
     coordinator -->|"Délègue la collecte"| listings
     coordinator -->|"Délègue la recherche"| expert
     coordinator --> model
@@ -31,7 +35,7 @@ flowchart LR
     ui -->|"Relit le carnet"| db
 ```
 
-L’interface et le backend appartiennent à la même application Streamlit. Le navigateur transmet les événements du formulaire et reçoit les mises à jour via WebSocket. Python exécute les outils, calcule les notes et interroge SQLite. Ollama fournit l’inférence aux trois agents.
+L’interface et le backend appartiennent à la même application Streamlit. Le navigateur transmet les événements du formulaire et reçoit les mises à jour via WebSocket. Python exécute les outils, calcule les notes et interroge SQLite. Ollama fournit l’inférence aux agents.
 
 ## 2. Que se passe-t-il pendant une recherche ?
 

@@ -21,6 +21,12 @@ ollama list
 
 Le modèle initial est `llama3.1:latest`. Si nécessaire, le télécharger avec `ollama pull llama3.1`. La barre latérale liste les modèles présents dans Ollama. Le diagnostic demande au modèle d’appeler un outil puis de restituer le code aléatoire renvoyé. Le résultat positif est conservé quinze minutes. L’interface et Ollama utilisent la boucle locale. Internet sert à consulter les sites automobiles et à découvrir les documents via DDGS. Aucune clé API à renseigner.
 
+## Chercher une voiture par usage
+
+En mode **Catalogues en direct**, saisir par exemple « Une petite citadine pour me garer en ville, avec un budget maximum de 15 000 € », puis choisir **Rechercher avec cette phrase**. En l’absence de modèle nommé, l’agent de compréhension propose jusqu’à trois modèles du catalogue. Pour chacun, Carnet auto consulte les annonces, applique les filtres et conserve jusqu’à trois résultats classés. Chaque proposition indique la raison du choix du modèle, le prix affiché et la source de l’annonce. Les trois premières annonces de la sélection globale rejoignent le carnet de visites.
+
+Lorsqu’un modèle est explicitement reconnu, la phrase ouvre le rapport détaillé habituel. En mode **Soutenance locale**, les recommandations utilisent uniquement les Clio V du jeu embarqué.
+
 ## Exemple pour une soutenance
 
 Le scénario principal utilise **Soutenance locale** avec Ollama. Saisir Clio V, 13 000 €, 80 000 km, essence et manuelle. Les agents lisent sept fiches fictives et une notice constructeur embarquée, puis le coordinateur enregistre sa sélection dans SQLite. Retrouver Tours, Lille et Lyon dans le **Carnet de visites**, y compris après actualisation. Le mode **Démonstration** conserve le calcul hors IA. Le mode **Catalogues en direct** consulte les sites publics.

@@ -7,6 +7,8 @@ import requests
 from comparateur.agents import probe, run
 from comparateur.selections import recent
 from comparateur.vehicles import MODELS
+from comparateur.intent import understand
+from comparateur.discovery import discover
 from comparateur.domain import DEFAULT_WEIGHTS, Query, alternatives, model_match
 from statistics import median
 
@@ -70,8 +72,42 @@ with st.sidebar:
 
 with recherche:
     st.subheader("Quel véhicule cherchez-vous ?")
-    make_col, model_col = st.columns(2)
+    auto_search = False
+    candidates = []
     local = demo or rehearsal
+    if demo:
+        st.caption("La recherche en une phrase est disponible en mode direct ou soutenance locale.")
+    else:
+        phrase = st.text_input("Décris la voiture que tu recherches", placeholder="Une petite voiture automatique pour la ville, à moins de 15 000 €.")
+        if st.button("Rechercher avec cette phrase", disabled=not ready or not phrase.strip()):
+            st.session_state.pop("last_report", None)
+            st.session_state.pop("suggestions", None)
+            try:
+                with st.spinner("L’agent de compréhension consulte le catalogue…"):
+                    make, vehicle, filters, issues = understand(phrase, name, rehearsal)
+                st.session_state[f"marque_{local}"] = make
+                st.session_state[f"modele_{local}_{make}"] = vehicle
+                for field in ("budget", "km", "first", "last", "fuel", "gearbox", "wants"):
+                    value = getattr(filters, field)
+                    if field in ("fuel", "gearbox"):
+                        value = value or "Toutes"
+                    if field == "wants":
+                        value = ", ".join(value)
+                    st.session_state["filter_"+field] = value
+                if issues:
+                    st.warning(" ".join(issues))
+                else:
+                    auto_search = True
+                    candidates = filters.candidates
+                    st.success("Filtres compris · " + " · ".join(str(x) for x in (
+                        make, vehicle, filters.fuel, filters.gearbox,
+                        f"{filters.budget} € max" if filters.budget else "",
+                        f"{filters.km} km max" if filters.km is not None else "",
+                        f"depuis {filters.first}" if filters.first else "",
+                        f"jusqu’en {filters.last}" if filters.last else "", *filters.wants) if x))
+            except Exception as exc:
+                st.error(f"Demande non interprétée. Précisez votre phrase ou utilisez le formulaire. {exc}")
+    make_col, model_col = st.columns(2)
     brand = make_col.selectbox(
         "Marque", ["Renault"] if local else list(MODELS),
         index=0 if local else None, placeholder="Choisir une marque", key=f"marque_{local}",
@@ -82,32 +118,33 @@ with recherche:
         placeholder="Choisir un modèle", disabled=brand is None, key=f"modele_{local}_{brand}",
     )
 
-with recherche, st.form("search"):
+with recherche, st.container(border=True):
     a,b = st.columns(2)
-    budget = a.number_input("Budget maximal (€)",min_value=1,value=None,placeholder="Sans limite")
-    km = b.number_input("Kilométrage maximal",min_value=0,value=None,placeholder="Sans limite")
+    budget = a.number_input("Budget maximal (€)",min_value=1,value=None,placeholder="Sans limite",key="filter_budget")
+    km = b.number_input("Kilométrage maximal",min_value=0,value=None,placeholder="Sans limite",key="filter_km")
     with st.expander("Affiner la recherche"):
         c,d = st.columns(2)
-        first = c.number_input("Année minimale",min_value=1886,value=None,placeholder="Toutes")
-        last = d.number_input("Année maximale",min_value=1886,value=None,placeholder="Toutes")
+        first = c.number_input("Année minimale",min_value=1886,value=None,placeholder="Toutes",key="filter_first")
+        last = d.number_input("Année maximale",min_value=1886,value=None,placeholder="Toutes",key="filter_last")
         a,b=st.columns(2)
-        fuel=a.selectbox("Énergie",["Toutes","Essence","Diesel","Hybride","Électrique","GPL"])
-        box=b.selectbox("Boîte",["Toutes","Manuelle","Automatique"])
-        wants=st.text_input("Finition et équipements souhaités",placeholder="Ex. Zen, régulateur de vitesse")
+        fuel=a.selectbox("Énergie",["Toutes","Essence","Diesel","Hybride","Électrique","GPL"],key="filter_fuel")
+        box=b.selectbox("Boîte",["Toutes","Manuelle","Automatique"],key="filter_gearbox")
+        wants=st.text_input("Finition et équipements souhaités",placeholder="Ex. Zen, régulateur de vitesse",key="filter_wants")
     with st.expander("Personnaliser la notation"):
         st.caption("Augmentez le poids des critères qui comptent pour vous. Les poids sont ramenés à 100 % au lancement de la recherche. Un poids de 0 désactive le critère.")
         weights = {label: st.slider(label, 0, 100, default, step=5, key=f"poids_{label}")
                    for label, default in DEFAULT_WEIGHTS.items()}
-    submit=st.form_submit_button("Rechercher et comparer",type="primary",disabled=not ready or model is None)
-if submit:
+    submit=st.button("Rechercher et comparer",type="primary",disabled=not ready or model is None)
+if submit or auto_search:
     if not any(weights.values()):
         st.error("Donnez un poids positif à au moins un critère de notation.")
-    elif not brand or not model or (first and last and first>last):
+    elif (not candidates and (not brand or not model)) or (first and last and first>last):
         st.error("Renseignez une marque et un modèle et vérifiez l’ordre des années.")
     else:
-        q=Query(model.strip(),budget,km,first,last,fuel if fuel!="Toutes" else "",
-                box if box!="Toutes" else "",tuple(dict.fromkeys(w.strip() for w in wants.split(",") if w.strip())), brand=brand.strip(), weights=weights)
+        q=Query(phrase if candidates else model.strip(),budget,km,first,last,fuel if fuel!="Toutes" else "",
+                box if box!="Toutes" else "",tuple(dict.fromkeys(w.strip() for w in wants.split(",") if w.strip())), brand=(brand or "").strip(), weights=weights)
         st.session_state.pop("last_report",None)
+        st.session_state.pop("suggestions",None)
         with recherche, st.status("Recherche en cours…",expanded=True) as status:
             # LangGraph exécute les outils sur des threads. La file garde Streamlit sur le thread UI.
             from concurrent.futures import ThreadPoolExecutor
@@ -115,7 +152,10 @@ if submit:
             events=Queue()
             try:
                 with ThreadPoolExecutor(max_workers=1) as worker:
-                    job=worker.submit(run,q,name,demo,events.put,rehearsal=rehearsal)
+                    if candidates:
+                        job=worker.submit(discover,q,candidates,rehearsal,events.put)
+                    else:
+                        job=worker.submit(run,q,name,demo,events.put,rehearsal=rehearsal)
                     while not job.done():
                         try:
                             status.write(events.get(timeout=0.25))
@@ -124,7 +164,12 @@ if submit:
                     report=job.result()
                 while not events.empty():
                     status.write(events.get_nowait())
-                st.session_state.last_report=(mode,q,report)
+                if auto_search and not candidates:
+                    report.logs.insert(0, "Agent de compréhension · catalogue consulté et filtres validés")
+                if candidates:
+                    st.session_state.suggestions=(mode,phrase,candidates,report)
+                else:
+                    st.session_state.last_report=(mode,q,report)
                 status.update(label="Rapport disponible",state="complete",expanded=False)
             except Exception as e:
                 status.update(label="Recherche interrompue",state="error")
@@ -140,6 +185,28 @@ def link(c):
         st.caption("Fiche fictive "+c.url.split(":")[-1])
 
 with recherche:
+    if "suggestions" in st.session_state and st.session_state.suggestions[0] == mode:
+        _, description, proposed, suggestions = st.session_state.suggestions
+        st.header("Annonces pour votre usage")
+        st.write(description)
+        for candidate in proposed:
+            st.write(f"**{candidate.brand} {candidate.model}** · {candidate.reason}")
+        for row in suggestions.ranked:
+            car = row["car"]
+            with st.container(border=True):
+                st.subheader(f"{car.model} · {fmt(car.price)} €")
+                st.write(f"{row['score']}/10 · {fmt(car.km)} km · {car.year or 'Année inconnue'}")
+                st.caption(" · ".join(filter(None, [car.engine, car.fuel, car.gearbox, car.place])))
+                st.write(row["reason"])
+                if row["confirmed"]:
+                    st.write("Préférences confirmées · "+", ".join(row["confirmed"]))
+                link(car)
+        if not suggestions.ranked:
+            st.info("Aucune annonce vérifiée ne satisfait les critères parmi les modèles explorés.")
+        for notice in suggestions.notices:
+            st.caption(notice)
+        st.caption("Sélection dans le carnet · " + suggestions.receipt)
+
     if "last_report" in st.session_state and st.session_state.last_report[0]==mode:
         _,q,r=st.session_state.last_report
         st.divider()
@@ -290,7 +357,7 @@ with carnet:
                     st.markdown(f"[Ouvrir la fiche]({c['url']})")
 
 with architecture:
-    st.subheader("Architecture des trois agents")
+    st.subheader("Architecture des agents")
     diagram = Path(__file__).resolve().parent / "docs" / "architecture.dot"
     st.graphviz_chart(diagram.read_text(), width="stretch")
-    st.caption("Les trois agents partagent le modèle Ollama sélectionné. Le backend renvoie les événements et le rapport au navigateur.")
+    st.caption("Les agents partagent le modèle Ollama sélectionné. Le backend renvoie les événements et le rapport au navigateur.")

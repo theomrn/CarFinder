@@ -54,3 +54,25 @@ class Interpretation(unittest.TestCase):
         self.assertEqual((brand, model, issues), ("Toyota", None, []))
         self.assertEqual([c.model for c in fields.candidates], ["Yaris"])
         self.assertEqual(fields.budget, 12500)
+
+    def test_discovery_only_shows_verified_matches(self):
+        from dataclasses import replace
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        from comparateur import demo
+        from comparateur.discovery import discover
+        from comparateur.domain import Query
+        from comparateur.intent import Candidate
+        from comparateur.selections import recent
+        proposals = [Candidate(brand=b, model=m, reason="Format compact")
+                     for b,m in (("Toyota","Yaris"),("Peugeot","208"))]
+        def catalog(source, model, brand):
+            car = replace(demo.cars()[0], model=f"{brand} {model}", url=model)
+            return [car, replace(car, url=model+"cher", price=30000)], "OK", ""
+        with TemporaryDirectory() as tmp, patch("comparateur.discovery.sources.catalog", side_effect=catalog):
+            db = Path(tmp)/"test.sqlite"
+            result = discover(Query("Une citadine", budget=15000), proposals, database=db)
+            self.assertEqual({r["car"].model for r in result.ranked}, {"Toyota Yaris","Peugeot 208"})
+            self.assertEqual(len(result.ranked), 2)
+            self.assertEqual(len(recent(db)), 1)
